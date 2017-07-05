@@ -1,0 +1,23 @@
+ .form-group {
+    display: -webkit-flex;
+    -webkit-flex-direction: row;
+    display: flex;
+    flex-direction: row;
+}
+
+.form-input-group {
+    width: 32.66%;
+}
+
+.form-input-group:nth-child(2n),.form-input-group:nth-child(3n) {
+    margin-left: 1%;
+}
+
+.form-input-group div {
+    float: left;
+    width: 100%;
+}
+        
+.form-input-group:last-child {
+    flex: 1;
+}

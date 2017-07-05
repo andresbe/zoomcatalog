@@ -1,0 +1,272 @@
+<html>
+
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+	 crossorigin="anonymous">
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+	 crossorigin="anonymous">
+	<style>
+		body {
+			width: 95%;
+			margin: 0 auto;
+		}
+
+		.search-results {
+			float: left;
+			width: 100%;
+		}
+
+		.search-results .sr-item {
+			float: left;
+			width: 100%;
+			margin: 5px 0px;
+			padding: 10px 15px;
+			-moz-border-radius: 5px;
+			-webkit-border-radius: 5px;
+			border-radius: 5px;
+			background: #FFF;
+			-moz-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.5);
+			-webkit-box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.5);
+			box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.5);
+		}
+
+		.search-results .sr-item .sr-item-title {
+			font-size: 16px;
+			font-weight: 600;
+			color: #434a54;
+			display: block;
+		}
+
+		.search-results .sr-item .sr-item-link {
+			font-size: 12px;
+			font-weight: 400;
+			color: #95b75d;
+			line-height: 20px;
+		}
+
+		.search-results .sr-item p {
+			font-size: 13px;
+			color: #656d78;
+			margin: 5px 0px;
+		}
+
+		.search-results .sr-item p.sr-item-links {
+			font-size: 11px;
+		}
+
+		.modal-dialog {
+			margin: 20% auto;
+		}
+	</style>
+
+	<script>
+		var app = angular.module("myShoppingList", []).run(["$rootScope", function ($rootScope) {
+			$rootScope.api_url = 'https://reqres.in/api/'
+			if (localStorage.getItem('user'))
+				$rootScope.logged_user = JSON.parse(localStorage.getItem('user'));
+		}]);
+
+		app.factory('UserServices', function ($http, $q, $rootScope) {
+			return {
+				loginUserRequest: function loginUserRequest(email, password) {
+					var q = $q.defer();
+					$http({
+						method: 'post',
+						url: 'https://reqres.in/api/login',
+						data: { "email": email, "password": password },
+						config: 'Content-Type: application/json;'
+					}).then(function (response) {
+						$rootScope.logged_user = { userEmail: email, token: response.data.token };
+						localStorage.setItem("user", JSON.stringify($rootScope.logged_user));
+						q.resolve(response);
+
+					}, function (response) {
+						q.reject(response);
+					});
+
+					return q.promise;
+				},
+				validateUserSession: function () {
+					if (localStorage.getItem('user'))
+						if (!$rootScope.logged_user)
+							$rootScope.logged_user = JSON.parse(localStorage.getItem('user'));
+					else
+						return	false;
+					if ($rootScope.logged_user)
+						return true;
+					else
+						return false;
+				}
+			};
+		});
+
+		app.controller("myCtrl", ["$scope", "$filter", "UserServices", "$rootScope", "$timeout", function ($scope, $filter, UserServices, $rootScope, $timeout) {
+
+
+			if (localStorage.getItem('links'))
+				$scope.links = JSON.parse(localStorage.getItem('links'));
+
+			//localStorage.setItem("links", '');
+			//localStorage.setItem("user", '');
+
+			$scope.addItem = function () {
+				if (UserServices.validateUserSession()) {
+					var newTemp = $filter("filter")($scope.links, { site: $scope.addMe.site });
+					if (newTemp.length == 0) {
+						$scope.addMe.votes = 0
+						$scope.links.push($scope.addMe)
+						$scope.setLink(JSON.stringify($scope.links))
+						$scope.addMe = {}
+					}
+				}
+				else
+					$('#loginModal').modal('show');
+			}
+
+			$scope.setLink = function (val) {
+				localStorage.setItem("links", val);
+			}
+
+			$scope.voteUp = function (site) {
+
+				var newTemp = $filter("filter")($scope.links, { site: site.site })[0]
+				newTemp.votes = (parseInt(newTemp.votes) + 1)
+				$scope.links.splice($scope.links.indexOf(newTemp), 1, newTemp)
+				$scope.setLink(JSON.stringify($scope.links))
+			}
+
+			$scope.voteDown = function (site) {
+				if (site.votes > 0) {
+					var newTemp = $filter("filter")($scope.links, { site: site.site })[0]
+					newTemp.votes = (parseInt(newTemp.votes) - 1)
+					$scope.links.splice($scope.links.indexOf(newTemp), 1, newTemp)
+					$scope.setLink(JSON.stringify($scope.links))
+				}
+			}
+			var countDown = function () {
+				if ($scope.links) {
+					$scope.links.forEach(function (site) {
+						$scope.voteDown(site);
+					}, this);
+					$timeout(countDown, 10000);
+				}
+			}
+
+			$timeout(countDown, 10000);
+
+
+		}]);
+
+		app.controller("loginController", ["$rootScope", "$scope", "UserServices", function ($rootScope, $scope, UserServices) {
+			$scope.user = {}
+			$scope.login = function () {
+				var res = UserServices.loginUserRequest($scope.user.name, $scope.user.password);
+				res.then(function (response) {
+					$('#loginModal').modal('close');
+				}, function (response) {
+					alert("Error " + response.data.error);
+					console.log(JSON.stringify(response));
+				});
+			}
+		}]);
+	</script>
+
+</head>
+
+<body ng-app="myShoppingList" ng-controller="myCtrl">
+	<div class="row">
+		<div class="col-md-12">
+			<h1>Welcome {{logged_user.userEmail}} </h1>
+		</div>
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-body">
+					<p>Subscribes you to posts from that community and adds it to your home.</p>
+					<form class="form-horizontal">
+						<div class="form-group">
+							<div class="col-md-12" style="margin-bottom:10px;padding:0px;">
+								<div class="col-md-1">
+									<label>Link</label>
+								</div>
+								<div class="col-md-9">
+									<div class="input-group">
+										<div class="input-group-addon">
+											<span class="glyphicon glyphicon-globe"></span>
+										</div>
+										<input type="text" ng-model="addMe.site" class="form-control" placeholder="Submit a new link">
+									</div>
+								</div>
+								<div class="col-md-2">
+									<button class="btn btn-primary btn-block" ng-click="addItem()"><span class="fa fa-plus"></span> Add new site</button>
+								</div>
+							</div>
+
+							<div class="col-md-12" style="margin-bottom:10px;padding:0px;">
+								<div class="input-inline">
+									<label class="col-md-1">Title:</label>
+									<div class="col-md-11">
+										<input type="text" ng-model="addMe.title" class="form-control col-md-10" placeholder="Please provide a title">
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="search-results">
+				<div class="sr-item" ng-repeat="sites in links track by $index">
+					<a href="#" class="sr-item-title">{{sites.title}}</a>
+					<div style="margin:10px 0;">
+						<span>Votes : {{sites.votes}}</span>
+						<span class="glyphicon glyphicon-menu-down" ng-click="voteDown(sites)"></span>
+						<span class="glyphicon glyphicon-menu-up" ng-click="voteUp(sites)"></span>
+					</div>
+					<div class="sr-item-link">{{sites.site}}</div>
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc quis aliquam turpis. Sed sollicitudin laoreet turpis,
+						a tristique orci consectetur ac. Pellentesque auctor porta aliquam. In eu tellus vel elit mollis suscipit at ut metus.
+						Pellentesque consectetur malesuada fermentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris
+						in enim auctor, pretium leo vestibulum, eleifend ex. Nunc posuere ante pulvinar metus gravida imperdiet sit amet vitae
+						augue. Nunc et gravida neque. Mauris hendrerit nisi ac metus pharetra, nec sollicitudin odio iaculis.</p>
+					<p class="sr-item-links"><a href="#">Translate this page</a> - <a href="#">View cache</a> - <a href="#">Remove from search</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="loginModal" class="modal fade bs-example-modal-lg" tabindex="-1" ng-controller="loginController">
+		<div class="modal-dialog modal-md">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Log in</h4>
+				</div>
+				<div class="modal-body form-inline col-md-12">
+					<div class="form-group col-md-12" style="padding-bottom:10px;">
+						<label for="exampleInputName2" class="col-md-4">Username</label>
+						<input type="text" ng-model="user.name" class="form-control col-md-6">
+					</div>
+					<div class="form-group col-md-12" style="padding-bottom:10px;">
+						<label for="exampleInputName2" class="col-md-4">Password</label>
+						<input type="password" ng-model="user.password" class="form-control col-md-6">
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" ng-click="login()">Log In</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+	 crossorigin="anonymous"></script>
+</body>
+
+</html>

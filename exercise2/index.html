@@ -1,0 +1,124 @@
+<html>
+
+<head>
+	<title>ZoomCatalog :: Exercise 2</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" href="_css/style.css">
+</head>
+
+<body ng-app="exercise2" ng-controller="myCtrl">
+	<div class="row">
+		<div class="col-md-12">
+			<h1>ZoomCatalog :: Exercise 2 </h1>
+		</div>
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-body">
+					<div class="col-md-12 no-padding" ng-if="logged_user.userEmail">
+						<h3 class="col-md-10 no-padding">Username : {{logged_user.userEmail}}</h3>
+						<span class="col-md-2 text-right"><a class="logout-link" ng-click="logout()">Logout</a></span>
+					</div>
+					<p>Subscribes you to posts from that community and adds it to your home.</p>
+					<form class="form-horizontal">
+						<div class="form-group">
+							<div class="col-md-12 no-padding link-input">
+								<div class="col-md-1">
+									<label>Link</label>
+								</div>
+								<div class="col-md-9">
+									<div class="input-group">
+										<div class="input-group-addon">
+											<span class="glyphicon glyphicon-globe"></span>
+										</div>
+										<input tabindex="1" type="text" ng-model="addMe.site" class="form-control" placeholder="Submit a new link">
+									</div>
+								</div>
+								<div class="col-md-2">
+									<button class="btn btn-primary btn-block" ng-click="addItem()"><span class="fa fa-plus"></span> Add new site</button>
+								</div>
+							</div>
+
+							<div class="col-md-12 no-padding">
+								<div class="input-inline">
+									<label class="col-md-1">Title:</label>
+									<div class="col-md-11">
+										<input tabindex="2" type="text" ng-model="addMe.title" class="form-control col-md-10" placeholder="Please provide a title">
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="search-results">
+				<div class="sr-item" ng-repeat="sites in links track by $index">
+					<div class="item-container" style="">
+						<a ng-href="{{sites.site}}" class="title">{{sites.title}}</a>
+						<div class="sr-item-link">{{sites.site}}</div>
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc quis aliquam turpis. Sed sollicitudin laoreet turpis,
+							a tristique orci consectetur ac. Pellentesque auctor porta aliquam. In eu tellus vel elit mollis suscipit at ut metus.
+							Pellentesque consectetur malesuada fermentum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris
+							in enim auctor, pretium leo vestibulum, eleifend ex. Nunc posuere ante pulvinar metus gravida imperdiet sit amet vitae
+							augue. Nunc et gravida neque. Mauris hendrerit nisi ac metus pharetra, nec sollicitudin odio iaculis.</p>
+						<p class="sr-item-links"><a href="#">Translate this page</a> - <a href="#">View cache</a> - <a href="#">Remove from search</a></p>
+					</div>
+					<div class="votes-container">
+						<div>
+							<h3 style="margin-top:15px;">Votes</h3>
+						</div>
+						<div ng-class="getClass(sites,'+1')">
+							<span class="glyphicon glyphicon-menu-up" ng-click="changeVote(sites, '+1')"></span>
+						</div>
+						<div class="votes-label">
+							{{sites.votes}}
+						</div>
+						<div ng-class="getClass(sites,'-1')">
+							<span class="glyphicon glyphicon-menu-down" ng-click="changeVote(sites, '-1')"></span>
+
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="loginModal" class="modal fade bs-example-modal-lg" tabindex="-1" ng-controller="loginController">
+		<div class="modal-dialog modal-md">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Log in</h4>
+				</div>
+				<div class="modal-body form-inline col-md-12">
+					<div class="form-group col-md-12" style="padding-bottom:10px;">
+						<label class="col-md-4">Username</label>
+						<input type="text" ng-model="user.name" class="form-control col-md-6">
+					</div>
+					<div class="form-group col-md-12" style="padding-bottom:10px;">
+						<label class="col-md-4">Password</label>
+						<input type="password" ng-model="user.password" class="form-control col-md-6">
+					</div>
+				</div>
+				<div class="alert alert-danger" ng-if="loginError">
+					<strong>Error! </strong>{{loginError}}
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" ng-click="login()">Log In</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="_js/exercise2.js"></script>
+</body>
+
+</html>
